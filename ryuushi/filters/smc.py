@@ -7,6 +7,7 @@ from ryuushi.models.ssm import StateSpaceModel
 from ryuushi.particle import Particle
 from ryuushi.resampling import ResamplingScheme, ResamplerFactory
 from ryuushi.output import Output
+from ryuushi.observation import Observation
 
 class SequentialMonteCarloFilter(ABC):
     """Abstract base class for SMC algorithms"""
@@ -15,6 +16,7 @@ class SequentialMonteCarloFilter(ABC):
         self.resampler = ResamplerFactory.create(resampling_scheme)
         self.particles = []
         self.log_likelihood = 0.0
+        self.time_step = 0
         self.time = 0
 
     @abstractmethod
@@ -22,11 +24,11 @@ class SequentialMonteCarloFilter(ABC):
         pass
 
     @abstractmethod
-    def step(self, data: Any) -> Output:
+    def step(self, observation: Observation, prev_observation: Observation = None) -> Output: # type: ignore
         pass
 
     @abstractmethod
-    def run(self, data_sequence: List[Any]) -> List[Output]:
+    def run(self, data_sequence: List[Observation]) -> List[Output]:
         pass
 
     def effective_sample_size(self, particles: List[Particle]) -> float:

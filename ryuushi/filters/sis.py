@@ -12,14 +12,14 @@ from ryuushi.filters.sir import SIRFilter
 class SISFilter(SIRFilter):
     """Sequential Importance Sampling (SIS) filter"""
 
-    def step(self, observation: Any) -> Output:
+    def step(self, observation: Any, prev_observation: Any = None) -> Output:
         """Perform one Sequential Importance Sampling (SIS) step"""
         new_particles = []
         log_likelihood_increment = 0.0
 
         for particle in self.particles:
             # Propose new state pi(x_t | y_t)
-            proposed_state = self.importance_distribution.sample(particle, observation, self.time)
+            proposed_state = self.importance_distribution.sample(particle, observation, prev_observation)
 
             # Calculate weight w_t = w_{t-1} * p(y_t | x_t)
             log_likelihood = self.model.log_likelihood(proposed_state, observation, self.time)
