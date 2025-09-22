@@ -16,3 +16,12 @@ class Particle:
         self.weight = weight
         self.parent = parent
         self.log_likelihood = 0.0
+
+    def history(self) -> list:
+        """Retrieve the ancestry of the particle"""
+        lineage = []
+        current = self
+        while current is not None:
+            lineage.append(current)
+            current = current.parent
+        return lineage[::-1]
