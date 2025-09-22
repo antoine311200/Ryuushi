@@ -63,7 +63,7 @@ class PendulumTrackingModel(StateSpaceModel):
         noise = np.random.normal(0, self.process_noise, size=state.shape)
         return deterministic_update + noise
 
-    def log_likelihood(self, state: np.ndarray, observation: Observation, time: int) -> float:
+    def log_likelihood(self, state: np.ndarray, observation: Observation, time: int, parameters: Optional[np.ndarray] = None) -> float:
         # Compute p(y_t | x_t) assuming Gaussian noise
         if observation is None: return 0.0
         if self.measurement_noise == 0:
