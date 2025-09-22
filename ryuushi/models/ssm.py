@@ -6,7 +6,7 @@ import numpy as np
 class StateSpaceModel(ABC):
     """Abstract base class for state space models"""
     @abstractmethod
-    def transition(self, state: np.ndarray, time: int, dt: float) -> np.ndarray:
+    def transition(self, state: np.ndarray, time: int, dt: float = None) -> np.ndarray: # type: ignore
         pass
 
     @abstractmethod

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -58,7 +58,7 @@ class PendulumTrackingModel(StateSpaceModel):
         new_state[0] = (new_state[0] + np.pi) % (2 * np.pi) - np.pi  # Wrap angle to [-π, π]
         return new_state
 
-    def transition(self, state: np.ndarray, time: int, dt: float) -> np.ndarray:
+    def transition(self, state: np.ndarray, time: int, dt: float) -> np.ndarray: # type: ignore
         deterministic_update = self.pendulum_dynamics(state, dt=dt)
         noise = np.random.normal(0, self.process_noise, size=state.shape)
         return deterministic_update + noise
