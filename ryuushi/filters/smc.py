@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -24,7 +24,7 @@ class SequentialMonteCarloFilter(ABC):
         pass
 
     @abstractmethod
-    def step(self, observation: Observation, prev_observation: Observation = None) -> Output: # type: ignore
+    def step(self, observation: Observation, prev_observation: Optional[Observation] = None) -> Output: # type: ignore
         pass
 
     @abstractmethod

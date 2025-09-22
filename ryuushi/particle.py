@@ -11,8 +11,9 @@ class Particle:
         parent (Optional[Particle]): The parent particle from the previous time step.
         log_likelihood (float): The log-likelihood of the particle.
     """
-    def __init__(self, state: np.ndarray, weight: float, parent: Optional['Particle'] = None):
+    def __init__(self, state: np.ndarray, weight: float, parent: Optional['Particle'] = None, parameters: Optional[np.ndarray] = None):
         self.state = state
+        self.parameters = parameters
         self.weight = weight
         self.parent = parent
         self.log_likelihood = 0.0

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -12,9 +12,9 @@ class BootstrapImportance(ImportanceDistribution):
     def __init__(self, model: StateSpaceModel):
         self.model = model
 
-    def sample(self, particle: Particle, observation: Observation, prev_observation: Observation = None) -> np.ndarray: # type: ignore
+    def sample(self, particle: Particle, observation: Observation, prev_observation: Optional[Observation] = None) -> np.ndarray: # type: ignore
         # Bootstrap importance consists in using the transition kernel as the importance distribution
-        return self.model.transition(particle.state, observation.time, (observation.time - prev_observation.time) if prev_observation else observation.time)
+        return self.model.transition(particle.state, observation.time, (observation.time - prev_observation.time) if prev_observation else observation.time, parameters=particle.parameters)
 
     def log_density(self, state: np.ndarray, particle: Particle, data: Any, time: int) -> float:
         # For bootstrap filter, we don't need the log density of the importance distribution
