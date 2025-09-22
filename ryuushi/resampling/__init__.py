@@ -1,3 +1,4 @@
 from ryuushi.resampling.resampler import ResamplingScheme, Resampler
 from ryuushi.resampling.multinomial import MultinomialResampler
+from ryuushi.resampling.systematic import SystematicResampler
 from ryuushi.resampling.resampling_factory import ResamplerFactory
