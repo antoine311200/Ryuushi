@@ -28,10 +28,10 @@ class PendulumTrackingModel(StateSpaceModel):
         self.prev_time = 0
 
     def pendulum_dynamics(self, state: np.ndarray, dt: float = 0.1) -> np.ndarray:
-        angle, angular_vel = state
 
         def f(state):
             # Pendulum equation: d²θ/dt² + damping*dθ/dt + (g/L)*sin(θ) = 0
+            angle, angular_vel = state
             angular_accel = (
                 -self.damping * angular_vel
                 - (self.gravity / self.length) * np.sin(angle)
@@ -40,6 +40,7 @@ class PendulumTrackingModel(StateSpaceModel):
 
         if self.method == "Euler":
             # Euler integration
+            angle, angular_vel = state
             angular_vel, angular_accel = f(state)
             new_angle = angle + angular_vel * dt
             new_angular_vel = angular_vel + angular_accel * dt
