@@ -28,4 +28,4 @@ class Particle:
         return lineage[::-1]
 
     def __repr__(self):
-        return f"Particle(state={self.state}, weight={self.weight}, log_likelihood={self.log_likelihood})"
+        return f"Particle(state={self.state}, weight={self.weight}, log_likelihood={self.log_likelihood}, parameters={self.parameters})"

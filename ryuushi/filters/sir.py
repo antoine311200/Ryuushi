@@ -20,8 +20,11 @@ class SIRFilter(SequentialMonteCarloFilter):
         self.particles = []
         for _ in range(num_particles):
             state = self.model.initial_state()
-            parameters = self.model.initial_parameters() if hasattr(self.model, 'initial_parameters') else None
-
+            parameters = None
+            if hasattr(self.model, "initial_parameters"):
+                parameters = self.model.initial_parameters()
+                if parameters is not None:
+                    parameters = np.atleast_1d(np.asarray(parameters, dtype=float))
             particle = Particle(state, 1.0/num_particles, parameters=parameters)
             self.particles.append(particle)
         self.time_step = 0
@@ -41,7 +44,7 @@ class SIRFilter(SequentialMonteCarloFilter):
             if np.isnan(weight) or np.isinf(weight): weight = 0.0
 
             # Create new particle at new time step
-            new_particle = Particle(proposed_state, weight, particle)
+            new_particle = Particle(proposed_state, weight, particle, parameters=particle.parameters)
             new_particle.log_likelihood = log_likelihood
             new_particles.append(new_particle)
 
