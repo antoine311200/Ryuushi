@@ -19,3 +19,8 @@ class Resampler(ABC):
     def resample(self, particles: List[Particle]) -> List[Particle]:
         """Resample particles according to their weights"""
         pass
+
+    @abstractmethod
+    def resample_indices(self, weights: List[float]) -> List[int]:
+        """Resample indices according to given weights"""
+        pass

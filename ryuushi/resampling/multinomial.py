@@ -22,3 +22,8 @@ class MultinomialResampler(Resampler):
             new_particles.append(new_particle)
 
         return new_particles
+
+    def resample_indices(self, weights: List[float]) -> List[int]:
+        normalized_weights = (np.array(weights) / np.sum(weights)).flatten()
+        indices = np.random.choice(len(weights), size=len(weights), p=normalized_weights)
+        return indices # type: ignore
