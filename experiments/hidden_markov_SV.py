@@ -1,9 +1,10 @@
 from typing import Any
+from time import time
 
 import numpy as np
 
 from ryuushi.models import StateSpaceModel
-from ryuushi.filters import SIRFilter, SISFilter
+from ryuushi.filters import SIRFilter, SISFilter, AuxiliaryParticleFilter
 from ryuushi.resampling import ResamplingScheme
 from ryuushi.observation import Observation
 
@@ -53,15 +54,21 @@ true_states, observations = generate_data(model, num_steps)
 filters = {
     "SIR-systematic": SIRFilter(model, ResamplingScheme.SYSTEMATIC),
     "SIR-multinomial": SIRFilter(model, ResamplingScheme.MULTINOMIAL),
+    "APF-systematic": AuxiliaryParticleFilter(model, ResamplingScheme.SYSTEMATIC),
+    "APF-multinomial": AuxiliaryParticleFilter(model, ResamplingScheme.MULTINOMIAL),
 }
 
 results = {}
 num_particles = 100
 for name, filter_instance in filters.items():
     print(f"Running filter: {name}")
+    start_time = time()
     filter_instance.initialize(num_particles)
     outputs = filter_instance.run(observations)
-    results[name] = outputs
+    rmse = np.sqrt(np.mean([(np.mean([p.state for p in output.particles]) - true_states[t][0])**2 for t, output in enumerate(outputs)]))
+    results[name] = {"outputs": outputs, "rmse": rmse}
+    end_time = time()
+    print(f"Completed in {end_time - start_time:.2f} seconds with RMSE: {rmse:.4f}")
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -69,24 +76,24 @@ sns.set_context("paper")
 sns.set_style("whitegrid")
 
 time_steps = np.arange(num_steps)
-plt.figure(figsize=(12, 8))
-plt.subplot(2, 1, 1)
+plt.figure(figsize=(12, 4))
+# plt.subplot(2, 1, 1)
 plt.suptitle("Hidden Markov Model with Stochastic Volatility")
 plt.plot(time_steps, [s[0] for s in true_states], label="True Log-Volatility", color="black", linestyle="--")
 for name, outputs in results.items():
-    estimated_states = [np.mean([p.state for p in output.particles]) for output in outputs]
-    plt.plot(time_steps, estimated_states, label=f"Estimated Log-Volatility ({name})")
+    estimated_states = [np.mean([p.state for p in output.particles]) for output in outputs["outputs"]]
+    plt.plot(time_steps, estimated_states, label=f"Log-Volatility ({name}) | RMSE: {outputs['rmse']:.4f}")
 plt.xlabel("Time")
 plt.ylabel("Log-Volatility")
 plt.title("Estimated Log-Volatilities")
 plt.legend()
-plt.subplot(2, 1, 2)
-plt.subplots_adjust(hspace=0.4)
-for name, outputs in results.items():
-    estimated_variances = [np.var([p.state for p in output.particles]) for output in outputs]
-    plt.plot(time_steps, estimated_variances, label=f"Estimated Variance ({name})")
-plt.xlabel("Time")
-plt.ylabel("Variance")
-plt.title("Estimated Variance of Log-Volatility")
-plt.legend()
+# plt.subplot(2, 1, 2)
+# plt.subplots_adjust(hspace=0.4)
+# for name, outputs in results.items():
+#     estimated_variances = [np.var([p.state for p in output.particles]) for output in outputs]
+#     plt.plot(time_steps, estimated_variances, label=f"Estimated Variance ({name})")
+# plt.xlabel("Time")
+# plt.ylabel("Variance")
+# plt.title("Estimated Variance of Log-Volatility")
+# plt.legend()
 plt.show()
