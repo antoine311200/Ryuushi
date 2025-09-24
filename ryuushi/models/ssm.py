@@ -11,6 +11,7 @@ class StateSpaceModel(ABC):
 
     @abstractmethod
     def log_likelihood(self, state: np.ndarray, observation: Any, time: int, parameters: Optional[np.ndarray] = None) -> float:
+        """Compute the log-likelihood of an observation given the state p(y_t | x_t)"""
         pass
 
     @abstractmethod

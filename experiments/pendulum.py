@@ -58,7 +58,7 @@ class PendulumTrackingModel(StateSpaceModel):
         new_state[0] = (new_state[0] + np.pi) % (2 * np.pi) - np.pi  # Wrap angle to [-π, π]
         return new_state
 
-    def transition(self, state: np.ndarray, time: int, dt: float) -> np.ndarray: # type: ignore
+    def transition(self, state: np.ndarray, time: int, dt: float, parameters: Optional[np.ndarray] = None) -> np.ndarray: # type: ignore
         deterministic_update = self.pendulum_dynamics(state, dt=dt)
         noise = np.random.normal(0, self.process_noise, size=state.shape)
         return deterministic_update + noise
@@ -79,8 +79,11 @@ class PendulumTrackingModel(StateSpaceModel):
     def initial_state(self) -> np.ndarray:
         return np.array([np.pi / 4, 0.1])  # [angle, angular_velocity]
 
+    def initial_parameters(self) -> np.ndarray:
+        return np.array([self.process_noise, self.measurement_noise, self.damping])
+
 model = PendulumTrackingModel(
-    process_noise=0.01,
+    process_noise=0.05,
     measurement_noise=0.3,
     damping=0.5,
     method="RK4"

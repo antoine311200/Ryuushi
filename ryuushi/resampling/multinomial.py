@@ -8,7 +8,7 @@ class MultinomialResampler(Resampler):
     """Multinomial resampling implementation"""
     def resample(self, particles: List[Particle]) -> List[Particle]:
         weights = np.array([p.weight for p in particles])
-        normalized_weights = weights / np.sum(weights)
+        normalized_weights = (weights / np.sum(weights)).flatten()
         indices = np.random.choice(len(particles), size=len(particles), p=normalized_weights)
 
         new_particles = []

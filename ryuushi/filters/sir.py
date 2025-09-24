@@ -1,6 +1,7 @@
 from typing import Any, List, Optional
 import numpy as np
 
+from ryuushi.filters.sis import SISFilter
 from ryuushi.filters.smc import SequentialMonteCarloFilter
 from ryuushi.models.ssm import StateSpaceModel
 from ryuushi.distributions.bootstrap import BootstrapImportance
@@ -9,30 +10,13 @@ from ryuushi.output import Output
 from ryuushi.particle import Particle
 from ryuushi.observation import Observation
 
-class SIRFilter(SequentialMonteCarloFilter):
+class SIRFilter(SISFilter):
     """Sequential Importance Resampling (SIR) filter"""
-    def __init__(self, model: StateSpaceModel, resampling_scheme: ResamplingScheme = ResamplingScheme.MULTINOMIAL):
-        super().__init__(model, resampling_scheme)
-        self.importance_distribution = BootstrapImportance(model)
-
-    def initialize(self, num_particles: int, data: Any = None) -> None:
-        """Initialize particles from initial state distribution"""
-        self.particles = []
-        for _ in range(num_particles):
-            state = self.model.initial_state()
-            parameters = None
-            if hasattr(self.model, "initial_parameters"):
-                parameters = self.model.initial_parameters()
-                if parameters is not None:
-                    parameters = np.atleast_1d(np.asarray(parameters, dtype=float))
-            particle = Particle(state, 1.0/num_particles, parameters=parameters)
-            self.particles.append(particle)
-        self.time_step = 0
-        self.time = 0
 
     def step(self, observation: Observation, prev_observation: Optional[Observation] = None) -> Output:
         """Perform one Sequential Importance Resampling (SIR) step"""
         new_particles = []
+        log_likelihood_increment = 0.0
 
         for particle in self.particles:
             # Propose new state pi(x_t | y_t)
@@ -48,6 +32,7 @@ class SIRFilter(SequentialMonteCarloFilter):
             new_particle.log_likelihood = log_likelihood
             new_particles.append(new_particle)
 
+            log_likelihood_increment += weight * log_likelihood
 
         # Normalize weights
         new_particles = self.normalize_weights(new_particles)
@@ -58,6 +43,7 @@ class SIRFilter(SequentialMonteCarloFilter):
             new_particles = self.resampler.resample(new_particles)
 
         self.particles = new_particles
+        self.log_likelihood += log_likelihood_increment
         self.time_step += 1
 
         return Output(
@@ -66,11 +52,3 @@ class SIRFilter(SequentialMonteCarloFilter):
             effective_sample_size=ess,
             diagnostics={"resampled": ess < len(new_particles) / 2}
         )
-
-    def run(self, data_sequence: List[Any]) -> List[Output]:
-        """Run SIR on a sequence of data"""
-        outputs = []
-        for observation, prev_observation in zip(data_sequence, [None] + data_sequence[:-1]):
-            output = self.step(observation, prev_observation) # type: ignore
-            outputs.append(output)
-        return outputs
