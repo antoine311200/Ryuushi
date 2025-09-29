@@ -16,6 +16,7 @@ class HiddenMarkovSV(StateSpaceModel):
         self.tau = tau      # Volatility of log-volatility
 
     def transition(self, state: np.ndarray, time: int, dt: float, parameters: Any = None) -> np.ndarray: # type: ignore
+        # X_n+1 = rho * X_n + sigma * eta_n, eta_n ~ N(0,1)
         return self.rho * state + self.sigma * np.random.randn() #* np.sqrt(dt)
 
     def log_likelihood(self, state: np.ndarray, observation: Any, time: int, parameters: np.ndarray = None) -> float: # type: ignore
@@ -48,7 +49,7 @@ def generate_data(model: HiddenMarkovSV, num_steps: int, dt: float = 1.0) -> tup
         observations.append(Observation(data=observation_noise, time=t))
     return states, observations
 
-num_steps = 200
+num_steps = 500
 true_states, observations = generate_data(model, num_steps)
 
 filters = {
@@ -59,7 +60,7 @@ filters = {
 }
 
 results = {}
-num_particles = 100
+num_particles = 500
 for name, filter_instance in filters.items():
     print(f"Running filter: {name}")
     start_time = time()
@@ -76,8 +77,8 @@ sns.set_context("paper")
 sns.set_style("whitegrid")
 
 time_steps = np.arange(num_steps)
-plt.figure(figsize=(12, 4))
-# plt.subplot(2, 1, 1)
+plt.figure(figsize=(12, 8))
+plt.subplot(2, 1, 1)
 plt.suptitle("Hidden Markov Model with Stochastic Volatility")
 plt.plot(time_steps, [s[0] for s in true_states], label="True Log-Volatility", color="black", linestyle="--")
 for name, outputs in results.items():
@@ -87,8 +88,28 @@ plt.xlabel("Time")
 plt.ylabel("Log-Volatility")
 plt.title("Estimated Log-Volatilities")
 plt.legend()
-# plt.subplot(2, 1, 2)
-# plt.subplots_adjust(hspace=0.4)
+plt.subplot(2, 1, 2)
+plt.subplots_adjust(hspace=0.4)
+# Plot return observations scatter and estimated returns
+plt.plot(time_steps, [obs.data for obs in observations], label="Observed Returns", color="black", linestyle="--", linewidth=1)
+for name, outputs in results.items():
+    # sigma = model.tau * np.exp(np.mean([p.state for p in outputs["outputs"][-1].particles]) / 2)
+    # epsilon = np.array([obs.data / sigma for obs in observations]) / sigma
+    # plt.plot(time_steps, 2 *epsilon, label="+2 std dev ("+name+")", linestyle=":", linewidth=0.5)
+    # plt.plot(time_steps, -2 *epsilon, label="-2 std dev ("+name+")", linestyle=":", linewidth=0.5)
+    # plt.fill_between(time_steps, 2 * epsilon, -2 * epsilon, alpha=0.5, label="±2 std dev")
+    # plt.fill_between(time_steps, 1 * epsilon, -1 * epsilon, alpha=0.8, label="±1 std dev")
+
+    estimated_returns = [np.mean([p.state for p in output.particles]) * model.tau * np.exp(np.mean([p.state for p in output.particles]) / 2) for output in outputs["outputs"]]
+    plt.plot(time_steps, estimated_returns, label=f"Estimated Returns ({name})", alpha=0.75, linewidth=0.5)
+    # fill ±1 and ±2 std dev
+    estimated_std_devs = [np.std([p.state for p in output.particles]) * model.tau * np.exp(np.mean([p.state for p in output.particles]) / 2) for output in outputs["outputs"]]
+    plt.fill_between(time_steps, np.array(estimated_returns) + np.array(estimated_std_devs), np.array(estimated_returns) - np.array(estimated_std_devs), alpha=0.3, label=f"±1 std dev ({name})")
+    plt.fill_between(time_steps, np.array(estimated_returns) + 2 * np.array(estimated_std_devs), np.array(estimated_returns) - 2 * np.array(estimated_std_devs), alpha=0.1, label=f"±2 std dev ({name})")
+plt.xlabel("Time")
+plt.ylabel("Returns")
+plt.title("Observed vs Estimated Returns")
+plt.legend()
 # for name, outputs in results.items():
 #     estimated_variances = [np.var([p.state for p in output.particles]) for output in outputs]
 #     plt.plot(time_steps, estimated_variances, label=f"Estimated Variance ({name})")
